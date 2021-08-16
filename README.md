@@ -1,7 +1,7 @@
 <snippet>
   <content><![CDATA[
 
-# ${1:Poor Man's CDC - Moshe}
+# {1:Poor Man's CDC - Moshe}
 The project create a full process CDC from sourc table to remote target table.
 The project was developed on on windows using Spider Editor , MYSQL , MYSQL workbench and git bash.
 
