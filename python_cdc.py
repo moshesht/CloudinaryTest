@@ -61,8 +61,8 @@ third_hour = [
 
 # -------------------------------------------
 
-# extracts the  last record updated date from the last successful run   - return current run upate_at start
 def extract_run_start() :
+# extracts the  last record updated date from the last successful run   - return current run upate_at start
     logger.info (" - starting run")
     sql_extract_run_start = "Select coalesce(max(updated_at_end ), '2000-01-01T00:00') as start_Date from target_db.run_log where run_status=  'SUCCESS'"
     target_cursor.execute (sql_extract_run_start) 
@@ -72,6 +72,7 @@ def extract_run_start() :
     
 
 def check_schema_evolution():
+# check for changes between source table and target table structure
     sql_schema_source="SELECT COLUMN_NAME , DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'source_TBL' and table_schema = 'source_db'"
     sql_schema_target="SELECT COLUMN_NAME , DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'target_tbl' and table_schema = 'target_db'"
     source_cursor.execute (sql_schema_source) 
@@ -102,14 +103,12 @@ def insert_into_run_log(a) :
     return  (run_id)
 
 
-
 def extract_source_table(date, run_id):
 # extract data from source to CSV   
     sql_extract_source= ("select id, s3_path, format, type, cast(updated_at as CHAR)  from source_db.source_tbl where updated_at > '%s' INTO OUTFILE '%sb%s.csv' FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n'" %(date,stg_dir, run_id))
     source_cursor.execute (sql_extract_source)      
     logger.info(" - source extracted to CSV")
     return ()
-
 
 
 def load_to_target(run_id):
@@ -126,9 +125,8 @@ def load_to_target(run_id):
     return()
   
 
-# finds all missing numerators in source  and inserts them to a table
 def create_delete_vector() :
-  
+# finds all missing numerators in source  and inserts them to a table  
     target_cursor.execute("truncate table target_db.delete_vector")  
     target_db.commit()
     delete_vector_sql =  "with digit as ( select 0 as d union all select 1 union all select 2 union all select 3 union all   select 4 union all select 5 union all select 6 union all    select 7 union all select 8 union all select 9 )," + " all_seq as ( select a.d + (10 * b.d) + (100 * c.d) + (1000 * d.d) + (10000 * e.d) + (100000 * f.d)+ (1000000 * g.d) as  num" + " from digit a   cross join digit b cross join digit c cross join  digit d cross join digit e  cross join digit f  cross join  digit g order by 1 desc) ," + " seq as (select num from all_seq where num <=  (select max(id) from  source_db.source_tbl ) and num<>0 )" + " select num, num as num2 from  seq a left join source_db.source_tbl b on a.num= b.id where b.id is  null "
@@ -142,8 +140,8 @@ def create_delete_vector() :
     return (delete_vector )
 
 
-# delete rows from thetarget by ID's
 def delete_rows_From_target():
+# delete rows from thetarget by ID's
       
     create_delete_vector()
     delete_sql = ("delete from target_db.target_tbl where id in (select id from target_db.delete_vector)"  )
@@ -154,6 +152,7 @@ def delete_rows_From_target():
 
 
 def process_validation():
+# comprare row count between source and target table if not identical issue an ERROR and abort
     tolerance = 0.01
     sql_val_source="select count(*) from source_db.source_tbl"
     sql_val_target="select count(*) from target_db.target_tbl"
@@ -173,8 +172,8 @@ def process_validation():
         quit()
         
   
-# after a sucess load update the run log with end date and status
 def close_run(run_id):
+# after a sucess load update the run log with end date and status
     sql_close_Date = ("select max(updated_at) from target_db.target_tbl")
     target_cursor.execute (sql_close_Date)  
     for tbl in  target_cursor  :
@@ -185,9 +184,6 @@ def close_run(run_id):
     target_db.commit()
     return()
  
-    
-
-
 
 # -------------------------
   
@@ -201,9 +197,7 @@ def full_process():
     delete_rows_From_target()
     process_validation()
     close_run(run_id)
-          
-    
-        
+              
 # ----------------------
 
 def main():
@@ -225,7 +219,8 @@ def main():
     source_cursor.execute("delete from  source_tbl where id=3")
     source_db.commit()
     full_process()    
-        
+
+# ----------------------      
 
 main()
 
