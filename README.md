@@ -1,9 +1,10 @@
 <snippet>
   <content><![CDATA[
 
-# {1:Poor Man's CDC - Moshe}
-The project create a full process CDC from sourc table to remote target table.
-The project was developed on on windows using Spider Editor , MYSQL , MYSQL workbench and git bash.
+## 
+## Poor Man's CDC - Moshe
+The project create a full process CDC from source table to remote target table.
+The project was developed on on windows os using Spider Editor, MYSQL , MYSQL workbench and git bash.
 
 ## Installation
 1. Install an instance of MYSQL
